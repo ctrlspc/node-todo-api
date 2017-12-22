@@ -4,6 +4,7 @@ const {ObjectId} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../models/todo');
+const {User} = require('./../models/user');
 
 const testTodos = [{
   _id: new ObjectId(),
@@ -13,13 +14,22 @@ const testTodos = [{
   text:'Test todo 2'
 }];
 
+const testUsers = [{
+  _id: new ObjectId(),
+  email:'testuser1@example.com',
+  password:'1234567890'
+}];
+
 beforeEach((done) => {
-  Todo.remove({})
-    .then(() => {
+  Todo.remove({}).then(() => {
       return Todo.insertMany(testTodos);
-    })
-    .then(() => done());
-})
+    }).then(() => {
+      return User.remove({});
+    }).then(() => {
+      return User.insertMany(testUsers);
+    }).then(() => done());
+
+});
 
 describe('POST /todos', () => {
   it('Should create a new todo',(done) => {
@@ -263,12 +273,57 @@ describe('PATCH /todos/:id', () => {
       .expect(404)
       .end(done);
   });
+});
+
+describe('POST /user', () => {
 
 
+  it('Should save the user if succesful', (done) => {
+    var testUser = {
+      email:'me@home.com',
+      password:'averysafepassword'
+    };
 
+    request(app)
+      .post('/users')
+      .send(testUser)
+      .expect(200)
+      .end((err,res) => {
+        if (err) {
+          return done(err);
+        }
 
+        User.find({email:testUser.email}).then((user) => {
+          expect(user[0].password).toBe(testUser.password);
+          done();
+        }).catch((e) => done(e))
+      });
+  });
 
+  it('Should return a 400 error if the email is not unique', (done) => {
+    var testUser = {
+      email:testUsers[0].email,
+      password:'averysafepassword'
+    };
 
+    request(app)
+      .post('/users')
+      .send(testUser)
+      .expect(400)
+      .end(done);
+  });
 
+  it('Should return a 400 error if the email is not valid', (done) => {
+    var testUser = {
+      email:'notvalid',
+      password:'averysafepassword'
+    };
+
+    request(app)
+      .post('/users')
+      .send(testUser)
+      .expect(400)
+      .end(done);
+  });
 
 });
