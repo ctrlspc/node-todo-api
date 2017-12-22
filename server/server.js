@@ -9,6 +9,7 @@ var {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
+var {authenticate} = require('./middleware/authenticate');
 
 var app = express();
 const port = process.env.PORT;
@@ -123,10 +124,10 @@ app.post('/users', (req,res) => {
       res.status(400).send();
     });
 });
-//pick email and password
-//create a user and save it
-//if its succesful send it back(?)
-//otherwise send a 400
+
+app.get('/users/me', authenticate, (req,res) => {
+  res.send(req.user);
+});
 
 //*******************
 app.listen(port, () => {
