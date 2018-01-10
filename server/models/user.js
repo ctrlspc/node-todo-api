@@ -3,6 +3,7 @@ const validator = require('validator');
 const jwt = require('jsonwebtoken');
 var _ = require('lodash');
 var bcrypt = require('bcryptjs');
+var salt = 'lajsnfadlsjfndaljndvljn';
 
 var UserSchema = new mongoose.Schema({
   email: {
@@ -58,20 +59,24 @@ UserSchema.methods.toJSON = function () {
 
 UserSchema.methods.generateAuthToken = function () {
   var user = this;
-  var salt = 'lajsnfadlsjfndaljndvljn';
   var access = 'auth';
   var token = jwt.sign({_id:user._id.toHexString(), access}, salt).toString();
 
   user.tokens = user.tokens.concat([{access, token}]);
-
+  console.log('token:', token);
   return user.save().then(() => {
     return token;
   });
 };
 
+UserSchema.methods.validatePassword = function (password) {
+
+  var user = this;
+  return bcrypt.compareSync(password, this.password);
+}
+
 UserSchema.statics.findByToken = function (token) {
   var User = this;
-  var salt = 'lajsnfadlsjfndaljndvljn';
   //verify token
   var decoded;
 
