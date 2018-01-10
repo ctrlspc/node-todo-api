@@ -268,13 +268,19 @@ describe('POST /user', () => {
       .post('/users')
       .send(testUser)
       .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toExist();
+        expect(res.body.user._id).toExist();
+        expect(res.body.user.email).toBe(testUser.email);
+      })
       .end((err,res) => {
         if (err) {
           return done(err);
         }
 
-        User.find({}).then((users) => {
-          expect(users.length).toBe(3);
+        User.findOne({email:testUser.email}).then((user) => {
+          expect(user).toExist();
+          expect(user.password).toNotBe(testUser.password);
           done();
         }).catch((e) => done(e))
       });
@@ -305,5 +311,28 @@ describe('POST /user', () => {
       .expect(400)
       .end(done);
   });
+});
 
+describe('GET /users/me', () => {
+  it('should return a user if authenticated', (done) => {
+
+
+    request(app)
+      .get('/users/me')
+      .set('x-auth', testUsers[0].tokens[0].token)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body._id).toBe(testUsers[0]._id.toHexString());
+        expect(res.body.email).toBe(testUsers[0].email);
+      })
+      .end(done);
+  });
+
+  it('should return a 401 if the user is not authenticated', (done) => {
+    request(app)
+      .get('/users/me')
+      .expect(401)
+      .expect((res) => expect(res.body).toEqual({}))
+      .end(done);
+  });
 });
