@@ -19,7 +19,7 @@ const testUserTwoID = new ObjectId();
 const testUsers = [{
   _id: testUserOneID,
   email:'testuser1@example.com',
-  password:'1234567890',-5
+  password:'1234567890',
   tokens: [{
     access:'auth',
     token:jwt.sign({_id:testUserOneID, access:'auth'}, 'lajsnfadlsjfndaljndvljn').toString()
