@@ -359,16 +359,13 @@ describe('POST /users/login', () => {
 
         User.findOne({email:testUser.email}).then((user) => {
           expect(user).toExist();
-
-          console.log(user);
-          console.log(res);
           expect(user.tokens[0].token).toBe(res.headers['x-auth']);
           done();
         }).catch((e) => done(e))
       });
   });
 
-  it('should return 401 for invalid request', (done) => {
+  it('should return 400 for invalid request', (done) => {
     var testUser = {
       email:testUsers[0].email,
       password:'invalidpassword'
@@ -377,7 +374,7 @@ describe('POST /users/login', () => {
     request(app)
       .post('/users/login')
       .send(testUser)
-      .expect(401)
+      .expect(400)
       .end(done);
   })
 

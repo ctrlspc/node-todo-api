@@ -63,17 +63,29 @@ UserSchema.methods.generateAuthToken = function () {
   var token = jwt.sign({_id:user._id.toHexString(), access}, salt).toString();
 
   user.tokens = user.tokens.concat([{access, token}]);
-  console.log('token:', token);
   return user.save().then(() => {
     return token;
   });
 };
 
-UserSchema.methods.validatePassword = function (password) {
+UserSchema.statics.findByCredentials = function (email, password) {
+  var User = this;
 
-  var user = this;
-  return bcrypt.compareSync(password, this.password);
-}
+  return User.findOne({email}).then((user) => {
+    if(!user) {
+      return Promise.reject();
+    }
+
+    return new Promise ((resolve, reject) => {
+      if (bcrypt.compareSync(password, user.password)) {
+        resolve(user);
+      } else {
+        reject();
+      }
+    })
+  })
+
+};
 
 UserSchema.statics.findByToken = function (token) {
   var User = this;

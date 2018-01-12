@@ -133,24 +133,14 @@ app.get('/users/me', authenticate, (req,res) => {
 app.post('/users/login', (req,res) => {
   var body = _.pick(req.body,['email', 'password']);
 
-  User.findOne({email:body.email}).then((user) => {
-      if (user) {
+  User.findByCredentials(body.email, body.password).then((user) => {
 
-        if(user.validatePassword(body.password)) {
-          console.log('sending header');
-
-          user.generateAuthToken().then((token) => {
-            res.header('x-auth', token).send({});
-          })
-
-        } else {
-          console.log('invalid password sending 401');
-          res.status(401).send();
-        }
-      } else {
-        res.status(401).send();
-      }
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send({user});
     });
+  }).catch((e) => {
+    res.status(400).send();
+  });
 });
 
 //*******************
