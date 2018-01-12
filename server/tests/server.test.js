@@ -377,7 +377,7 @@ describe('POST /users/login', () => {
     request(app)
       .post('/users/login')
       .send(testUser)
-      .expect(400)
+      .expect(401)
       .expect((res) => {
         expect(res.headers['x-auth']).toNotExist();
       })
@@ -391,12 +391,46 @@ describe('POST /users/login', () => {
           done();
         }).catch((e) => done(e))
       });
+  });
+});
+
+describe('DELETE /users/token', () => {
+  it('should delete the token for an authenticated user', (done) => {
+    request(app)
+      .delete('/users/me/token')
+      .set('x-auth', testUsers[0].tokens[0].token)
+      .expect(200)
+      .expect((res) => {
+        expect(res.headers['x-auth']).toNotExist();
+      })
+      .end((err,res) => {
+        if (err) {
+          return done(err);
+        }
+
+        User.findOne({email:testUsers[0].email}).then((user) => {
+          expect(user.tokens.length).toBe(0);
+          done();
+        }).catch((e) => done(e))
+
+      });
+  });
+
+
+  it('should return 401 for an unauthenticated user', (done) => {
+    request(app)
+      .delete('/users/me/token')
+      .expect(401)
+      .end((err,res) => {
+        if (err) {
+          return done(err);
+        }
+
+        User.findOne({email:testUsers[0].email}).then((user) => {
+          expect(user.tokens.length).toBe(1);
+          done();
+        }).catch((e) => done(e))
+
+      });
   })
-
-
-
-
-
-
-
 })
