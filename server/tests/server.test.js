@@ -359,7 +359,10 @@ describe('POST /users/login', () => {
 
         User.findOne({email:testUser.email}).then((user) => {
           expect(user).toExist();
-          expect(user.tokens[0].token).toBe(res.headers['x-auth']);
+          expect(user.tokens[0]).toInclude({
+            access:'auth',
+            token: res.headers['x-auth']
+          });
           done();
         }).catch((e) => done(e))
       });
@@ -367,7 +370,7 @@ describe('POST /users/login', () => {
 
   it('should return 400 for invalid request', (done) => {
     var testUser = {
-      email:testUsers[0].email,
+      email:testUsers[1].email,
       password:'invalidpassword'
     };
 
@@ -375,7 +378,19 @@ describe('POST /users/login', () => {
       .post('/users/login')
       .send(testUser)
       .expect(400)
-      .end(done);
+      .expect((res) => {
+        expect(res.headers['x-auth']).toNotExist();
+      })
+      .end((err,res) => {
+        if (err) {
+          return done(err);
+        }
+
+        User.findOne({email:testUser.email}).then((user) => {
+          expect(user.tokens.length).toBe(0);
+          done();
+        }).catch((e) => done(e))
+      });
   })
 
 
